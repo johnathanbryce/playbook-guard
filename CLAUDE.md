@@ -16,7 +16,8 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - api/src/db/schema.ts — contracts, chunks (+HNSW cosine index), playbook_rules
 - api/src/db/client.ts — Drizzle over pg Pool (DATABASE_URL)
 - api/src/cache/redis.ts — ioredis (REDIS_URL)
-- api/src/index.ts — Express + CORS + JSON; GET /health; GET /playbook (reads data/playbook.saas.json); POST /ingest (registered -> stubbed handler)
+- api/src/index.ts — Express + CORS + JSON; GET /health inline; mounts playbook + contracts + stream routers
+- api/src/routes/playbook.ts — GET /playbook (reads data/playbook.saas.json off disk)
 - web — static shell: upload input, Check button, empty results list w/ verdict-pill + grounding-badge markup + CSS (NO wiring)
 - package.json + tsconfig for api & web; drizzle.config.ts; Dockerfiles; .env.example
 - npm install run in both api/ and web/
@@ -30,8 +31,8 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - api/src/services/flag.ts — judge passages vs a playbook rule -> verdict
 - api/src/services/firewall.ts — verify claims grounded in untouched raw_text
 - api/src/services/escalate.ts — route low-confidence/ungrounded to stronger model/human
-- api/src/routes/ingest.ts — POST /ingest handler: accept upload, run ingest, return contract id (route is registered; body stubbed)
-- api/src/routes/stream.ts — SSE handler streaming per-rule verdicts
+- api/src/routes/contracts.ts — POST /contracts: upload .txt -> ingest() -> chunk/embed/store (router mounted; body stubbed)
+- api/src/routes/stream.ts — GET /stream SSE handler streaming per-rule verdicts (mounted; body stubbed)
 
 ## NOT OURS (already exist — do not touch)
 - data/playbook.saas.json
