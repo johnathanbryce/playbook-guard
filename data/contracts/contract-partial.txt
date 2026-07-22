@@ -1,0 +1,58 @@
+MASTER SUBSCRIPTION AGREEMENT — Northgate Cloudworks, Inc. ("Provider") and Customer
+
+This Master Subscription Agreement (this "Agreement") is entered into as of the Effective Date set forth on the applicable Order Form by and between Northgate Cloudworks, Inc., a Delaware corporation ("Provider"), and the customer identified on the Order Form ("Customer"). Provider and Customer are each a "Party" and together the "Parties."
+
+1. DEFINITIONS
+1.1 "Services" means Provider's hosted software-as-a-service platform and related support services described in an Order Form.
+1.2 "Order Form" means an ordering document executed by the Parties that references this Agreement and specifies the Services, subscription term, and fees.
+1.3 "Documentation" means Provider's then-current user guides and technical documentation for the Services.
+1.4 "Customer Data" means electronic data submitted to the Services by or on behalf of Customer.
+1.5 "Confidential Information" means non-public information disclosed by a Party that is designated confidential or that reasonably should be understood to be confidential given its nature and the circumstances of disclosure.
+
+2. SUBSCRIPTION AND LICENSE
+2.1 Subject to this Agreement and the applicable Order Form, Provider grants Customer a non-exclusive, non-transferable right during the subscription term to access and use the Services for Customer's internal business purposes.
+2.2 Customer shall not: (a) sublicense, resell, or make the Services available to third parties except authorized users; (b) reverse engineer or copy any component of the Services; (c) use the Services to build a competing product; or (d) exceed usage limits set forth in the Order Form.
+
+3. CUSTOMER RESPONSIBILITIES
+3.1 Customer is responsible for the accuracy and legality of Customer Data and for its authorized users' compliance with this Agreement.
+3.2 Customer shall maintain the confidentiality of login credentials and promptly notify Provider of any suspected unauthorized access to Customer's account.
+3.3 Customer shall use the Services in compliance with applicable laws and the Documentation.
+
+4. FEES AND PAYMENT
+4.1 Customer shall pay the fees specified in each Order Form. Except as expressly stated herein, fees are non-refundable.
+4.2 Provider shall invoice annually in advance unless otherwise stated in the Order Form.
+4.3 Fees are exclusive of taxes; Customer is responsible for all applicable taxes, excluding taxes on Provider's net income.
+
+5. AUTO-RENEWAL AND PRICING
+5.1 The initial subscription term is twelve (12) months from the Effective Date unless otherwise specified in the Order Form.
+5.2 The subscription will automatically renew for successive twelve (12) month terms unless either Party gives written notice of non-renewal at least thirty (30) days prior to the end of the then-current term.
+5.3 Fees for any renewal term shall not increase by more than five percent (5%) over the fees for the immediately preceding term, provided Provider gives notice of any increase at least forty-five (45) days before renewal.
+5.4 Invoices are due net thirty (30) days from the invoice date. Undisputed amounts more than thirty (30) days past due may accrue interest at the lesser of 1.5% per month or the maximum rate permitted by law.
+
+6. SERVICE LEVELS AND TERMINATION
+6.1 Provider will make the Services available at least 99.9% of the time in each calendar month, excluding scheduled maintenance announced at least forty-eight (48) hours in advance and unavailability caused by factors outside Provider's reasonable control ("Uptime Commitment").
+6.2 If monthly uptime falls below the Uptime Commitment, Customer's sole and exclusive remedy is a service credit against future fees as follows: below 99.9% but at least 99.5%, a credit of 5% of the monthly fee; below 99.5% but at least 99.0%, a credit of 10%; below 99.0%, a credit of 25%. Credits must be requested within thirty (30) days of the end of the affected month.
+6.3 Either Party may terminate this Agreement upon written notice if the other Party materially breaches this Agreement and fails to cure such breach within thirty (30) days after receiving written notice describing the breach.
+6.4 Upon termination or expiration, Customer's right to access the Services ceases. For thirty (30) days following termination, Provider will make Customer Data available for export in a commonly used, machine-readable format at no additional charge, after which Provider may delete Customer Data in accordance with its standard practices.
+6.5 Sections that by their nature should survive termination shall survive, including Sections 4, 7, 8, and 9.
+
+7. WARRANTIES
+7.1 Provider warrants that the Services will perform materially in accordance with the Documentation. Customer's exclusive remedy for breach of this warranty is re-performance of the deficient Services or, if Provider cannot cure, termination of the affected Order Form and a pro-rata refund of prepaid, unused fees.
+7.2 EXCEPT AS EXPRESSLY SET FORTH HEREIN, THE SERVICES ARE PROVIDED "AS IS" AND PROVIDER DISCLAIMS ALL OTHER WARRANTIES, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+8. CONFIDENTIALITY
+8.1 Each Party shall protect the other Party's Confidential Information using at least the same degree of care it uses for its own similar information, and no less than reasonable care, and shall use such information only to perform its obligations or exercise its rights under this Agreement.
+8.2 Confidential Information excludes information that: (a) is or becomes publicly available without breach; (b) was known to the recipient prior to disclosure; (c) is independently developed without use of the discloser's Confidential Information; or (d) is rightfully received from a third party without restriction.
+8.3 A Party may disclose Confidential Information to the extent required by law, provided it gives prompt notice (where legally permitted) and reasonable cooperation to seek protective treatment.
+
+9. LIMITATION OF LIABILITY
+9.1 EXCEPT FOR EXCLUDED CLAIMS, NEITHER PARTY'S AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO THIS AGREEMENT SHALL EXCEED THE TOTAL FEES PAID OR PAYABLE BY CUSTOMER IN THE TWELVE (12) MONTHS PRECEDING THE EVENT GIVING RISE TO THE CLAIM.
+9.2 EXCEPT FOR EXCLUDED CLAIMS, NEITHER PARTY SHALL BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR LOST PROFITS, REVENUE, OR DATA, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+9.3 "Excluded Claims" means: (a) a Party's breach of its confidentiality obligations under Section 8; (b) a Party's intellectual property indemnification obligations, if any, set forth in an Order Form; (c) liability arising from a Party's unauthorized disclosure of, or failure to safeguard, the other Party's data resulting in a data breach; and (d) a Party's gross negligence or willful misconduct.
+
+10. GENERAL
+10.1 This Agreement is governed by the laws of the State of Delaware, without regard to its conflict of laws principles. The Parties consent to the exclusive jurisdiction of the state and federal courts located in Wilmington, Delaware.
+10.2 Neither Party may assign this Agreement without the other Party's prior written consent, except to a successor in connection with a merger, acquisition, or sale of substantially all assets.
+10.3 Neither Party shall be liable for delay or failure to perform (other than payment obligations) due to causes beyond its reasonable control.
+10.4 All notices under this Agreement must be in writing and delivered to the addresses set forth on the Order Form.
+10.5 This Agreement, together with all Order Forms, constitutes the entire agreement between the Parties and supersedes all prior agreements regarding its subject matter. Any amendment must be in writing and signed by both Parties. If any provision is held unenforceable, the remainder shall remain in effect.

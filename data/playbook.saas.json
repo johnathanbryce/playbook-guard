@@ -1,0 +1,97 @@
+{
+  "name": "Northwind Systems, Inc. — Commercial Contracting Playbook",
+  "version": "1.1.0",
+  "agreementType": "SaaS Subscription Agreement (inbound / counterparty paper)",
+  "perspective": "Northwind is the CUSTOMER acquiring the SaaS. These are Northwind's standard positions when reviewing the vendor's (counterparty's) paper.",
+  "description": "Northwind's standard negotiating positions for inbound SaaS subscription agreements. Scoped to the six clauses that carry the material legal and financial exposure in a SaaS deal; the remaining boilerplate clauses are handled by standard fallbacks and are not part of this playbook. Each rule defines the preferred position, acceptable fallbacks (in descending order of preference), the walk-away line, any escalation routing, and the business rationale.",
+  "rules": [
+    {
+      "id": "limitation-of-liability",
+      "clause": "Limitation of Liability",
+      "priority": "high-risk",
+      "preferred": "Each party's aggregate liability arising out of or related to the Agreement is capped at the total fees paid or payable by Customer in the twelve (12) months preceding the event giving rise to the claim. The cap is mutual. Both parties waive liability for indirect, incidental, consequential, special, and punitive damages. The following categories sit OUTSIDE the cap (uncapped): breach of confidentiality, the IP-infringement indemnity, data-security and personal-data-breach obligations, gross negligence, willful misconduct, fraud, and each party's payment obligations.",
+      "fallbacks": [
+        "In lieu of leaving the high-risk categories fully uncapped, a super-cap of 2x-3x the trailing 12 months' fees for data-security-breach and IP-infringement claims, with the general cap held at 12 months' fees for all other claims.",
+        "For deals under $250k ARR, a general cap at total contract value (TCV) is acceptable to avoid prolonged negotiation, provided the confidentiality and data-breach carve-outs remain.",
+        "For strategic accounts only, fold the carve-outs into a single elevated super-cap rather than leaving them uncapped, so long as that super-cap is no less than 3x fees."
+      ],
+      "hardStop": "Fully uncapped liability for ordinary/general claims; any cap below 12 months' fees; a one-sided consequential-damages waiver that protects only the counterparty; folding the data-breach or IP-indemnity carve-outs back INSIDE the general cap; a broad consequential-damages exclusion that also sweeps away recovery of data-recreation and breach-response costs.",
+      "escalation": null,
+      "rationale": "Limitation of liability is the single most-negotiated and highest-financial-risk clause in a SaaS agreement, and it does not stand alone — it governs the ceiling on the indemnity. A cap below 12 months' fees exposes Northwind to losses disproportionate to the deal's revenue, and a data breach can dwarf a year of fees, which is why the security carve-out must sit outside the cap. Watch for the counterparty trying to pull customer-side-origin incidents (e.g., phished Northwind credentials) inside the cap; keep security exposure outside it."
+    },
+    {
+      "id": "indemnification",
+      "clause": "Indemnification",
+      "priority": "high-risk",
+      "preferred": "Mutual indemnification. Vendor indemnifies Customer against third-party claims that the Service infringes intellectual-property rights; Customer indemnifies Vendor against claims arising from Customer Data or Customer's misuse of the Service. The indemnifying party controls the defense and settlement, provided it may not, without the indemnified party's written consent, agree to any settlement that admits fault by, or imposes any non-monetary obligation or unreimbursed cost on, the indemnified party. The indemnified party gives prompt notice and reasonable cooperation. For an IP-infringement claim, Vendor's option to procure a license, modify the Service, or refund prepaid fees is in ADDITION to, not in lieu of, the indemnity.",
+      "fallbacks": [
+        "The IP-infringement indemnity may exclude claims arising from (a) unauthorized modification of the Service or (b) combination with non-Vendor products, but only where that modification or combination is the actual cause of the infringement.",
+        "A cap on the indemnity obligation tied to the liability super-cap is acceptable, provided the IP-infringement indemnity itself remains uncapped."
+      ],
+      "hardStop": "One-sided indemnity running only in the counterparty's favor; indemnity for Customer Data with no reciprocal Vendor IP indemnity; indemnity obligations with no notice or cooperation conditions; the indemnifying party controlling settlement with no consent right for the indemnified party; a fix-or-terminate remedy offered IN LIEU OF (rather than in addition to) the indemnity.",
+      "escalation": null,
+      "rationale": "Indemnification allocates the cost of third-party claims. Accepting a one-sided obligation transfers risk Northwind cannot control, such as how the vendor built its product. The consent condition on settlement control is the standard protection that stops the indemnifying party from settling in a way that concedes Northwind's fault."
+    },
+    {
+      "id": "data-processing-privacy",
+      "clause": "Data Processing & Privacy",
+      "priority": "high-risk",
+      "preferred": "A Data Processing Addendum (DPA) satisfying GDPR Article 28 is required. Vendor acts as processor and processes personal data only on Customer's documented instructions, and is bound as a 'service provider' under the CCPA (no selling, sharing, or use outside the contracted business purpose). Sub-processors are disclosed with at least 30 days' advance notice and a meaningful objection right that includes the right to terminate the affected service if the objection is unresolved. EU Standard Contractual Clauses (Module 2, controller-to-processor) govern cross-border transfers. Vendor notifies Customer of a personal-data breach without undue delay and no later than 72 hours after becoming aware.",
+      "fallbacks": [
+        "The sub-processor objection window may be reduced to 15 days for deals under $100k ARR.",
+        "The breach-notification window may extend to 96 hours if paired with a defined remediation and root-cause commitment."
+      ],
+      "hardStop": "No DPA; unrestricted sub-processor rights with no notice; an objection right with no remedy (no ability to terminate or withhold); cross-border transfer with no lawful transfer mechanism; a breach-notification obligation with no fixed outer time limit (bare 'without undue delay') or exceeding 7 days.",
+      "escalation": {
+        "team": "Security & Privacy",
+        "trigger": "Any clause governing personal-data processing, cross-border data transfer, sub-processor rights, or breach-notification obligations."
+      },
+      "rationale": "Data-processing terms carry regulatory (GDPR / CCPA) and security exposure. The Security & Privacy team must review any deviation because the risk of non-compliance is legal and reputational, not merely commercial. A breach-notice clause with no fixed hour limit is a tell for immature incident response and must be pinned to a concrete deadline."
+    },
+    {
+      "id": "ai-training-output-rights",
+      "clause": "AI Training & Output Rights",
+      "priority": "high-risk",
+      "preferred": "Vendor may not use Customer Data, Customer-derived inputs, or outputs to train, fine-tune, or improve any generalized or foundation model. Any model improvement is confined to Customer's own tenant, with Customer Data segregated from other tenants. Customer retains all right, title, and interest in Customer Data and in outputs generated from it; Vendor receives only a non-exclusive license to process that data as needed to deliver the Service.",
+      "fallbacks": [
+        "Vendor may use aggregated, fully de-identified usage metadata (never Customer Content) for service improvement, provided re-identification is contractually prohibited and the de-identified data is not used to train models shared across other customers.",
+        "Where a full training prohibition cannot be reached, a zero-retention arrangement is acceptable: inputs are processed to generate the output and nothing is retained for training or model improvement."
+      ],
+      "hardStop": "Any grant of rights to use Customer Content to train models shared across other customers; Vendor ownership of outputs; silence on training rights (the clause must be explicitly addressed); generic 'to improve, enhance, or develop our products and services' language that would silently authorize training or fine-tuning on Customer Content.",
+      "escalation": {
+        "team": "General Counsel",
+        "trigger": "Any clause granting the counterparty rights to use customer data, content, inputs, or outputs for model training, fine-tuning, or product improvement — including broad 'service improvement' language that could reach Customer Content."
+      },
+      "rationale": "AI training rights are an emerging, high-stakes issue. Granting training rights over customer content can irreversibly leak confidential or regulated data into a shared model, and the precedent set here affects every future deal — so it requires GC sign-off. The load-bearing risk is usually not an explicit training grant but broad 'improve our services' language paired with a de-identification carve-out that becomes a training backdoor."
+    },
+    {
+      "id": "service-levels-termination",
+      "clause": "Service Levels & Termination",
+      "priority": "high-risk",
+      "preferred": "Uptime SLA of 99.9% measured monthly, excluding scheduled maintenance. Service credits are the sole and exclusive remedy for availability shortfalls, on an escalating ladder (e.g., 10% of monthly fees below 99.9%, 25% below 99.0%, 50% below 95.0%); credits do NOT limit claims for data loss, security, or confidentiality breaches arising from the same incident. Either party may terminate for uncured material breach on 30 days' notice, and Customer may additionally terminate for chronic SLA failure (three consecutive months below target, or a single outage exceeding 24 hours). Customer may terminate for convenience at the end of the then-current term. Vendor provides data export in a machine-readable open format (e.g., CSV/JSON) for at least 30 days after termination, at no additional cost.",
+      "fallbacks": [
+        "99.5% uptime is acceptable for non-production or lower-tier plans.",
+        "Termination for convenience may be limited to annual terms rather than mid-term."
+      ],
+      "hardStop": "No SLA; termination rights running only to the counterparty; service credits framed as the sole remedy for ALL claims (thereby capping data-loss or security liability); no post-termination data-export or data-return obligation.",
+      "escalation": null,
+      "rationale": "SLAs and termination govern service continuity and exit. Service credits must be scoped to the availability miss only, not used to cap security or data-loss liability from the same outage. The absence of a data-export obligation creates vendor lock-in and a business-continuity risk on exit, which also becomes the counterparty's leverage at renewal."
+    },
+    {
+      "id": "auto-renewal-pricing",
+      "clause": "Auto-Renewal & Pricing",
+      "priority": "high-risk",
+      "preferred": "Annual term with auto-renewal, cancellable on 30 days' notice before the renewal date, and Vendor must send a renewal notice (including any price change) at least 60 days before that non-renewal deadline. Renewal price increases are capped at the lesser of 5% or CPI, applied no more than once per renewal. Fees are Net 30. No unilateral mid-term price changes.",
+      "fallbacks": [
+        "A renewal cap of up to 7% is acceptable for multi-year commitments.",
+        "Net 45 payment terms are acceptable for enterprise deals over $500k ARR."
+      ],
+      "hardStop": "Evergreen auto-renewal with a notice window exceeding 60 days; uncapped renewal increases; a renewal price change with no obligation to notify Customer in advance; unilateral mid-term price changes; payment terms beyond Net 60.",
+      "escalation": {
+        "team": "Finance",
+        "trigger": "Any payment terms extended beyond Net 45, any renewal price increase above the capped rate, or any multi-year prepayment or minimum-commitment obligation."
+      },
+      "rationale": "Auto-renewal and pricing terms carry direct financial and cash-flow impact. Finance must review material payment-term or renewal deviations because they affect budgeting, cash flow, and forecasting. The classic counterparty trap is auto-renewal with an uncapped increase and a long notice window and no reminder — engineered so the window is missed and leverage is lost on day one of the renewal."
+    }
+  ]
+}
