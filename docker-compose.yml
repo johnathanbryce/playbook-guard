@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: playbook
+      POSTGRES_PASSWORD: playbook
+      POSTGRES_DB: playbook
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # initdb: creates the pgvector extension on first boot only (empty data dir).
+      - ./api/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U playbook -d playbook"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./api
+    working_dir: /app
+    command: npm run dev
+    environment:
+      DATABASE_URL: postgres://playbook:playbook@postgres:5432/playbook
+      REDIS_URL: redis://redis:6379
+      PLAYBOOK_PATH: /data/playbook.saas.json
+      PORT: "3001"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./api:/app
+      # anonymous volume: keep the Linux-built node_modules, don't let the host bind mount clobber it
+      - /app/node_modules
+      # read-only access to the existing playbook + contracts on disk
+      - ./data:/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    working_dir: /app
+    command: npm run dev -- --host
+    environment:
+      VITE_API_URL: http://localhost:3001
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web:/app
+      # anonymous volume: preserve the Linux-built node_modules (vite/esbuild have native binaries)
+      - /app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
