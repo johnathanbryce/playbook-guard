@@ -26,9 +26,9 @@ body {
 }
 
 .app {
-  max-width: 820px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 1.25rem;
+  padding: 2rem 1.5rem;
 }
 
 .app__header {
@@ -164,4 +164,143 @@ body {
 .grounding-badge--ungrounded {
   color: var(--ungrounded);
   border-color: var(--ungrounded);
+}
+
+/* Playbook (read-only display) */
+.playbook {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.playbook__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.playbook__caret {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.playbook__body {
+  margin-top: 0.85rem;
+}
+
+.playbook__status {
+  color: var(--muted);
+  margin: 0.5rem 0;
+}
+
+.playbook__status--error {
+  color: var(--fail);
+}
+
+.playbook__meta {
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.playbook__name {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+}
+
+.playbook__envelope {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.playbook__field {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.playbook__field dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.playbook__field dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rule {
+  padding: 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.rule__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.rule__clause {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.rule__id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.rule__priority {
+  margin-left: auto;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--warn);
+  border: 1px solid var(--warn);
+}
+
+.rule__preferred {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.rule__label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.2rem;
 }

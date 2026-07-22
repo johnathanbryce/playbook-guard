@@ -18,7 +18,8 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - api/src/cache/redis.ts — ioredis (REDIS_URL)
 - api/src/index.ts — Express + CORS + JSON; GET /health inline; mounts playbook + contracts + stream routers
 - api/src/routes/playbook.ts — GET /playbook (reads data/playbook.saas.json off disk)
-- web — static shell: upload input, Check button, empty results list w/ verdict-pill + grounding-badge markup + CSS (NO wiring)
+- web — static shell: upload input, Check button, empty results list w/ verdict-pill + grounding-badge markup + CSS (upload/Check still NO wiring)
+- web — playbook render (display plumbing): App.tsx fetches GET /playbook on mount, renders envelope meta + rules (clause/id/priority/preferred) read-only, w/ loading + error states
 - package.json + tsconfig for api & web; drizzle.config.ts; Dockerfiles; .env.example
 - npm install run in both api/ and web/
 
