@@ -3,4 +3,9 @@
 .env.local
 node_modules
 dist
-*.log 
+*.log
+
+# Vite
+.vite
+dist-ssr
+*.local 
