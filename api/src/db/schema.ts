@@ -7,6 +7,7 @@ import {
   timestamp,
   vector,
   index,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // Untouched source contracts. raw_text is load-bearing ground truth for the firewall.
@@ -37,6 +38,21 @@ export const chunks = pgTable(
       t.embedding.op("vector_cosine_ops"),
     ),
   ],
+);
+
+// Playbook envelope (metadata minus rules). One row per playbook version.
+// `version` is load-bearing downstream: the analysis-result cache keys on it.
+export const playbooks = pgTable(
+  "playbooks",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    version: text("version").notNull(),
+    // Full envelope with `rules` stripped out — lossless reconstruction of GET /playbook.
+    meta: jsonb("meta").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [unique("playbooks_name_version_key").on(t.name, t.version)],
 );
 
 // Playbook rules, one row per rule.
