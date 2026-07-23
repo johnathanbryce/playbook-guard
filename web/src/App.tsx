@@ -97,6 +97,21 @@ const fwStyle = (s: FirewallStatus) =>
         ? { background: "#fdecea", color: "#c0392b" }
         : { background: "#eef0f2", color: "#5f6b7a" };
 
+const escBtnBase = {
+  padding: "0.4rem 0.95rem",
+  borderRadius: 6,
+  fontSize: "0.8rem",
+  fontWeight: 600,
+  cursor: "pointer",
+} as const;
+const sendBtnStyle = { ...escBtnBase, background: "#2f6feb", color: "#fff", border: "none" };
+const denyBtnStyle = {
+  ...escBtnBase,
+  background: "#fff",
+  color: "#c0392b",
+  border: "1px solid #e4b6b1",
+};
+
 export default function App() {
   const [playbook, setPlaybook] = useState<Playbook | null>(null);
   const [loading, setLoading] = useState(false);
@@ -163,6 +178,8 @@ export default function App() {
   const [rawJson, setRawJson] = useState<unknown>(null);
   const [rawLoading, setRawLoading] = useState(false);
   const [rawError, setRawError] = useState<string | null>(null);
+  // Per-email demo action (Send/Deny are inert — no email is ever delivered).
+  const [emailActions, setEmailActions] = useState<Record<string, "sent" | "denied">>({});
 
   async function fetchRawAnalysis(contractId: number) {
     setRawLoading(true);
@@ -426,83 +443,162 @@ export default function App() {
               </p>
             )}
 
-            {flags.length > 0 && (
-              <ul className="rules" style={{ marginTop: "1rem" }}>
-                {flags.map((f) => (
-                  <li className="rule" key={f.ruleId}>
-                    <div
-                      className="rule__head"
-                      style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}
-                    >
-                      <span className="rule__clause">{f.clause}</span>
-                      <span style={{ ...pillBase, ...verdictStyle(f.verdict) }}>{f.verdict}</span>
-                      <span
-                        style={{ ...pillBase, ...fwStyle(f.firewall.status) }}
-                        title={f.firewall.reasoning}
-                      >
-                        grounding: {f.firewall.status}
-                      </span>
-                      {f.escalation && (
-                        <span style={{ ...pillBase, background: "#eae6f7", color: "#5b3fa8" }}>
-                          escalate → {f.escalation.team}
-                        </span>
-                      )}
-                    </div>
-                    {f.firewall.grounded && f.citedSpan && (
-                      <p className="rule__preferred">
-                        <span className="rule__label">Cited span</span>“{f.citedSpan}”
-                      </p>
-                    )}
-                    <p className="rule__preferred">
-                      <span className="rule__label">Reasoning</span>
-                      {f.reasoning}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+            {analysis && (
+              <p className="analysis__summary" style={{ marginTop: "1rem" }}>
+                Coverage {analysis.summary.coverage.covered}/{analysis.summary.coverage.total} · verified{" "}
+                {analysis.summary.firewall.verified} · needs-review {analysis.summary.firewall.needsReview} ·
+                fabricated {analysis.summary.firewall.fabricated} · n/a{" "}
+                {analysis.summary.firewall.notApplicable}
+                {analysis.cached ? " · (cached)" : ""}
+              </p>
             )}
 
-            {analysis && (
-              <div className="analysis__summary" style={{ marginTop: "1rem" }}>
-                <p>
-                  Coverage {analysis.summary.coverage.covered}/{analysis.summary.coverage.total} · verified{" "}
-                  {analysis.summary.firewall.verified} · needs-review {analysis.summary.firewall.needsReview} ·
-                  fabricated {analysis.summary.firewall.fabricated} · n/a{" "}
-                  {analysis.summary.firewall.notApplicable}
-                  {analysis.cached ? " · (cached)" : ""}
-                </p>
+            {/* Analysis (left, flexible) and escalation emails (right, narrower) side by side */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.6rem",
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+                marginTop: "1rem",
+              }}
+            >
+              {flags.length > 0 && (
+                <ul className="rules" style={{ flex: "1 1 380px", minWidth: 0, margin: 0 }}>
+                  {flags.map((f) => (
+                    <li className="rule" key={f.ruleId}>
+                      <div
+                        className="rule__head"
+                        style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}
+                      >
+                        <span className="rule__clause">{f.clause}</span>
+                        <span style={{ ...pillBase, ...verdictStyle(f.verdict) }}>{f.verdict}</span>
+                        <span
+                          style={{ ...pillBase, ...fwStyle(f.firewall.status) }}
+                          title={f.firewall.reasoning}
+                        >
+                          grounding: {f.firewall.status}
+                        </span>
+                        {f.escalation && (
+                          <span style={{ ...pillBase, background: "#eae6f7", color: "#5b3fa8" }}>
+                            escalate → {f.escalation.team}
+                          </span>
+                        )}
+                      </div>
+                      {f.firewall.grounded && f.citedSpan && (
+                        <p className="rule__preferred">
+                          <span className="rule__label">Cited span</span>“{f.citedSpan}”
+                        </p>
+                      )}
+                      <p className="rule__preferred">
+                        <span className="rule__label">Reasoning</span>
+                        {f.reasoning}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-                {analysis.escalations.length > 0 && (
-                  <div className="escalations">
-                    <h4>Escalation drafts ({analysis.escalations.length})</h4>
-                    {analysis.escalations.map((em) => (
+              {analysis && analysis.escalations.length > 0 && (
+                <div className="escalations" style={{ flex: "0 1 420px", minWidth: 0 }}>
+                  <h4 style={{ margin: "0 0 0.6rem", fontSize: "0.9rem", color: "#38414d" }}>
+                    Escalation drafts ({analysis.escalations.length})
+                  </h4>
+                  {analysis.escalations.map((em) => {
+                    const action = emailActions[em.id];
+                    return (
                       <div
                         key={em.id}
-                        style={{ border: "1px solid #ddd", borderRadius: 8, padding: "0.75rem", marginBottom: "0.5rem" }}
+                        style={{
+                          border: "1px solid #e3e6ea",
+                          borderRadius: 10,
+                          marginBottom: "0.75rem",
+                          background: "#fbfcfd",
+                          overflow: "hidden",
+                        }}
                       >
-                        <div>
-                          <strong>To:</strong> {em.team}
+                        {/* header */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            padding: "0.6rem 0.75rem",
+                            borderBottom: "1px solid #edeff2",
+                            background: "#f4f2fb",
+                          }}
+                        >
+                          <span aria-hidden="true">✉️</span>
+                          <span style={{ ...pillBase, background: "#eae6f7", color: "#5b3fa8" }}>
+                            {em.team}
+                          </span>
                         </div>
-                        <div>
-                          <strong>Subject:</strong> {em.subject}
-                        </div>
-                        <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: "0.5rem 0" }}>
-                          {em.body}
-                        </pre>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                          <button type="button" disabled title="Display only — no email is sent">
-                            Send
-                          </button>
-                          <button type="button" disabled title="Display only">
-                            Deny
-                          </button>
+
+                        <div style={{ padding: "0.7rem 0.75rem" }}>
+                          {/* meta */}
+                          <div style={{ fontSize: "0.8rem", lineHeight: 1.5 }}>
+                            <div>
+                              <span style={{ color: "#8a94a2" }}>To:</span> {em.team}
+                            </div>
+                            <div style={{ fontWeight: 600, color: "#38414d" }}>{em.subject}</div>
+                          </div>
+
+                          {/* body */}
+                          <div
+                            style={{
+                              whiteSpace: "pre-wrap",
+                              fontSize: "0.8rem",
+                              lineHeight: 1.55,
+                              color: "#4a545f",
+                              background: "#fff",
+                              border: "1px solid #eceef1",
+                              borderRadius: 8,
+                              padding: "0.6rem 0.7rem",
+                              margin: "0.6rem 0",
+                              maxHeight: 200,
+                              overflowY: "auto",
+                            }}
+                          >
+                            {em.body}
+                          </div>
+
+                          {/* actions — active buttons, but inert (nothing is sent) */}
+                          {action ? (
+                            <p style={{ fontSize: "0.78rem", color: "#8a94a2", margin: 0 }}>
+                              {action === "sent" ? "✓ Marked sent" : "✕ Denied"} — demo only, no
+                              email was delivered.
+                            </p>
+                          ) : (
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <button
+                                type="button"
+                                style={sendBtnStyle}
+                                title="Demo — no email is actually sent"
+                                onClick={() =>
+                                  setEmailActions((prev) => ({ ...prev, [em.id]: "sent" }))
+                                }
+                              >
+                                Send
+                              </button>
+                              <button
+                                type="button"
+                                style={denyBtnStyle}
+                                title="Demo — nothing is sent"
+                                onClick={() =>
+                                  setEmailActions((prev) => ({ ...prev, [em.id]: "denied" }))
+                                }
+                              >
+                                Deny
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
               </>
             )}
 
