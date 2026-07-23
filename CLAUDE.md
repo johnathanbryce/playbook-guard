@@ -32,15 +32,15 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - api/src/services/rule-query.ts — DONE: `ruleToQuery(rule)` = clause + preferred (generic retriever stays playbook-agnostic)
 - Retrieval eval (contract #1): all 6 rules retrieve expected section at rank #1 (sim 0.72–0.85); service-levels-termination + auto-renewal-pricing correctly surface their 2nd relevant section at #2
 - data/fixtures/offtopic-nda.txt (OURS — original data/contracts/ left pristine): deliberately off-topic mutual NDA for floor/coverage tuning. Full-corpus eval (4 real + NDA) measured; floor LOCKED at 0.35 (degenerate-retrieval backstop only — off-topic band is 0.35–0.48 so it ~never fires; LLM owns not-addressed), coverage bar LOCKED at 0.70 (the real off-topic detector: off-topic 0/6 vs real 3–6/6). Numbers + matrix in DECISIONS
-- api/src/services/claude.ts — DONE: shared Anthropic client (official @anthropic-ai/sdk, reads ANTHROPIC_API_KEY) + FLAGGER_MODEL=claude-sonnet-5. Reused by flag/firewall/escalate
+- api/src/services/claude.ts — DONE: shared Anthropic client (official @anthropic-ai/sdk, reads ANTHROPIC_API_KEY) + FLAGGER_MODEL=claude-sonnet-5 + JUDGE_MODEL=claude-haiku-4-5. Reused by flag/firewall/escalate
 - api/src/services/flag.ts — DONE: flag(ruleId, contractId) loads rule -> retrieve(ruleToQuery, top-3) -> FLOOR 0.35 short-circuit to not-addressed w/o LLM (else) forced-tool-use judge (claude-sonnet-5, record_verdict tool, tool_choice forced, NO thinking/temperature) w/ top-1 sim as confidence hint -> {ruleId, clause, verdict, citedText (verbatim, ""→not-addressed), reasoning, topSimilarity, shortCircuited, passages[]}. Output shape designed for firewall (verbatim citation). Live-verified 6 cases across fidelity ladder + NDA: compliant/deviation/not-addressed all correct, citations GROUNDED (normalized substring in raw_text), off-topic NDA -> not-addressed via LLM (all sims >0.35 so floor never fired — validates the tuning). Typecheck clean in container
+- api/src/services/firewall.ts — DONE: firewall(flag, rawText) HARD GATE. (a) deterministic grounding: normalizeForMatch (collapse whitespace + unify smart quotes/dashes to ASCII, exported for tests) then exact substring of citedText in raw_text; (b) if grounded, cheaper INDEPENDENT judge (claude-haiku-4-5, record_check forced tool) confirms quote supports verdict. Labels: verified (a✓+b✓) | needs-review (a✓, judge unsure) | fabricated (a✗, quarantined, b skipped). Empty citation (not-addressed) -> verified w/ grounded:false. Live-verified all 4 label paths w/ synthetic Flags (incl. judge correctly holding a truncated cap quote at needs-review until complete). Typecheck clean
 - web — upload WIRED: file input (.txt) + "Upload & ingest" button -> POST /contracts (FormData field "file"); busy state ("Ingesting…"), ingest result card (contractId / chunkCount / new-vs-Dedup pill), error line. Analysis results list still pending (needs analyze+SSE)
 - web — playbook render (display plumbing): App.tsx fetches GET /playbook on mount, renders envelope meta + rules (clause/id/priority/preferred) read-only, w/ loading + error states
 - package.json + tsconfig for api & web; drizzle.config.ts; Dockerfiles; .env.example
 - npm install run in both api/ and web/
 
 ## STUBBED (throw TODO(John) — John implements live)
-- api/src/services/firewall.ts — HARD GATE, core of product. SIG CHANGE -> firewall(flag, rawText). (a) deterministic normalized-substring check of citedText in raw_text; (b) cheaper Claude judge confirms quote supports verdict -> verified|needs-review|fabricated. Note: flag already emits verbatim citedText and the normalized-substring preview passed GROUNDED on all cited smoke cases.  <-- NEXT
 - api/src/services/escalate.ts — REPURPOSED -> draft text-only dept email for a rule's escalation.team (was: route to stronger model). SIG: escalate(flag, rule, filename)
 - api/src/routes/contracts.ts — POST /contracts: upload .txt -> ingest() -> chunk/embed/store (router mounted; body stubbed)
 - api/src/routes/stream.ts — GET /stream?contractId= SSE: one `rule` event per rule (verdict+firewall status), final `done` summary (router mounted; body stubbed)
@@ -70,7 +70,7 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - Full spec: SPEC.md
 
 ## BUILD ORDER (live)
-~~seed -> chunk -> embed -> ingest -> wire upload -> retrieve -> flag~~ -> firewall (+test) -> escalate -> analyze(+result cache) -> /analysis -> SSE -> frontend toggle
+~~seed -> chunk -> embed -> ingest -> wire upload -> retrieve -> flag -> firewall~~ -> firewall tests -> escalate -> analyze(+result cache) -> /analysis -> SSE -> frontend toggle
 
-## NEXT
-- `firewall(flag, rawText)`: (a) deterministic normalized-substring check of flag.citedText in raw_text (collapse whitespace, unify quote/dash chars, exact substring — near-miss = fabricated); (b) cheaper independent Claude judge confirms the quote supports the verdict -> verified | needs-review | fabricated. Only runs for flags with a citation (compliant/deviation); not-addressed has none. Highest-value Vitest target (grounded/paraphrase/fabricated fixtures). Decide the cheaper judge model (claude-haiku-4-5 candidate) w/ John first — the "two tiers" decision
+## NEXT (John drives — do not auto-start)
+- Firewall is the highest-value Vitest target: unit-test `normalizeForMatch` + the grounded/off-point/fabricated/empty label paths (stage-b judge mocked at the SDK seam). Then `escalate(flag, rule, filename)` -> text-only dept email draft.

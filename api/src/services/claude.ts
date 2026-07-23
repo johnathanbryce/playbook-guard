@@ -9,3 +9,4 @@ export const anthropic = new Anthropic();
 
 // Two tiers (see DECISIONS: stronger flagger, cheaper firewall judge).
 export const FLAGGER_MODEL = "claude-sonnet-5";
+export const JUDGE_MODEL = "claude-haiku-4-5";
