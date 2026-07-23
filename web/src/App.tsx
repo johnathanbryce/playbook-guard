@@ -157,6 +157,28 @@ export default function App() {
     });
   }
 
+  // Raw-JSON view: fetch the SAME data from the real GET /analysis endpoint (a separate API
+  // call, NOT the accumulated SSE) — proves the endpoint is a real API, not UI-coupled.
+  const [viewMode, setViewMode] = useState<"live" | "json">("live");
+  const [rawJson, setRawJson] = useState<unknown>(null);
+  const [rawLoading, setRawLoading] = useState(false);
+  const [rawError, setRawError] = useState<string | null>(null);
+
+  async function fetchRawAnalysis(contractId: number) {
+    setRawLoading(true);
+    setRawError(null);
+    try {
+      const res = await fetch(`${API_URL}/analysis?contractId=${contractId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      setRawJson(data);
+    } catch (err) {
+      setRawError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRawLoading(false);
+    }
+  }
+
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFile(e.target.files?.[0] ?? null);
     setIngest(null);
@@ -360,14 +382,43 @@ export default function App() {
         {/* Analysis — stream per-rule verdicts via SSE /stream */}
         {ingest && (
           <div className="analysis" style={{ marginTop: "1rem" }}>
-            <button
-              className="controls__check"
-              type="button"
-              onClick={() => startAnalysis(ingest.contractId)}
-              disabled={analyzing}
+            {/* Two display modes off the SAME analyze() data: the live SSE stream, or the raw
+                GET /analysis JSON fetched as a real, separate API call (not UI-coupled). */}
+            <div
+              className="analysis__toggle"
+              style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}
             >
-              {analyzing ? "Analyzing…" : "Analyze against playbook"}
-            </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("live")}
+                aria-pressed={viewMode === "live"}
+                style={{ fontWeight: viewMode === "live" ? 700 : 400 }}
+              >
+                Live (SSE)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode("json");
+                  if (!rawJson && !rawLoading) fetchRawAnalysis(ingest.contractId);
+                }}
+                aria-pressed={viewMode === "json"}
+                style={{ fontWeight: viewMode === "json" ? 700 : 400 }}
+              >
+                Raw JSON (GET /analysis)
+              </button>
+            </div>
+
+            {viewMode === "live" && (
+              <>
+                <button
+                  className="controls__check"
+                  type="button"
+                  onClick={() => startAnalysis(ingest.contractId)}
+                  disabled={analyzing}
+                >
+                  {analyzing ? "Analyzing…" : "Analyze against playbook"}
+                </button>
 
             {analysisError && (
               <p className="results__empty results__empty--error">
@@ -449,6 +500,44 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+            )}
+              </>
+            )}
+
+            {viewMode === "json" && (
+              <div className="analysis__json">
+                <p style={{ fontSize: "0.8rem", color: "#5f6b7a", margin: "0 0 0.5rem" }}>
+                  <code>
+                    GET {API_URL}/analysis?contractId={ingest.contractId}
+                  </code>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => fetchRawAnalysis(ingest.contractId)}
+                  disabled={rawLoading}
+                >
+                  {rawLoading ? "Fetching…" : rawJson ? "Re-fetch /analysis" : "GET /analysis"}
+                </button>
+                {rawError && (
+                  <p className="results__empty results__empty--error">Fetch failed: {rawError}</p>
+                )}
+                {rawJson != null && (
+                  <pre
+                    style={{
+                      marginTop: "0.75rem",
+                      padding: "0.75rem",
+                      background: "#1e1e1e",
+                      color: "#e6e6e6",
+                      borderRadius: 8,
+                      overflowX: "auto",
+                      fontSize: "0.75rem",
+                      maxHeight: "480px",
+                    }}
+                  >
+                    {JSON.stringify(rawJson, null, 2)}
+                  </pre>
                 )}
               </div>
             )}
