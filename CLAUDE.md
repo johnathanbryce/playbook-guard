@@ -28,7 +28,7 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - api/src/routes/contracts.ts — DONE: POST /contracts, multer memoryStorage (5MB), field "file"; .txt-only (mimetype OR ext), 400 empty/no-file, 415 non-txt; 201 fresh / 200 dedup. Verified: upload high-fidelity -> 15 chunks stored (dim 1536); re-upload -> deduped:true, chunk+embed skipped
 - Vitest testing: host-only devDep; tsconfig excludes **/*.test.ts so container `tsc --noEmit` stays clean (tests run on host via `npm test`)
 - curl verify: `curl -s -X POST http://localhost:3001/contracts -F "file=@data/contracts/contract-high-fidelity.txt"`
-- web — static shell: upload input, Check button, empty results list w/ verdict-pill + grounding-badge markup + CSS (upload/Check still NO wiring)
+- web — upload WIRED: file input (.txt) + "Upload & ingest" button -> POST /contracts (FormData field "file"); busy state ("Ingesting…"), ingest result card (contractId / chunkCount / new-vs-Dedup pill), error line. Analysis results list still pending (needs analyze+SSE)
 - web — playbook render (display plumbing): App.tsx fetches GET /playbook on mount, renders envelope meta + rules (clause/id/priority/preferred) read-only, w/ loading + error states
 - package.json + tsconfig for api & web; drizzle.config.ts; Dockerfiles; .env.example
 - npm install run in both api/ and web/

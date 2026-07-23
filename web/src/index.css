@@ -76,6 +76,56 @@ body {
   filter: brightness(1.08);
 }
 
+.controls__check:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* Ingest result card */
+.ingest {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ingest__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ingest__file {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.ingest__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin: 0;
+}
+
+.ingest__stat dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+
+.ingest__stat dd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.results__empty--error {
+  color: var(--fail);
+}
+
 /* Results */
 .results {
   background: var(--panel);
