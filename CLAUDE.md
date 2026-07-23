@@ -13,18 +13,20 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 ## BUILT (real plumbing)
 - docker-compose.yml — pgvector/pg16, redis:7, api, web; named pg volume; anon node_modules volumes; api bind-mount + tsx watch
 - api/db/init/01-pgvector.sql — CREATE EXTENSION vector (initdb only)
-- api/src/db/schema.ts — contracts, chunks (+HNSW cosine index), playbook_rules
+- api/src/db/schema.ts — contracts, chunks (+HNSW cosine index), playbook_rules, playbooks (NEW: envelope meta + version; unique(name,version))
 - api/src/db/client.ts — Drizzle over pg Pool (DATABASE_URL)
 - api/src/cache/redis.ts — ioredis (REDIS_URL)
 - api/src/index.ts — Express + CORS + JSON; GET /health inline; mounts playbook + contracts + stream routers
-- api/src/routes/playbook.ts — GET /playbook (reads data/playbook.saas.json off disk)
+- api/src/routes/playbook.ts — GET /playbook NOW DB-BACKED: latest playbooks.meta + playbook_rules (insertion order) -> reconstructed envelope; 404 w/ hint if unseeded
+- api/src/services/seed.ts — DONE: upserts playbooks (envelope, keyed name+version) + playbook_rules (one row/rule, keyed rule_id); idempotent; returns {version, ruleCount}
+- api/src/scripts/seed.ts + `npm run db:seed` — CLI runner (seeds then closes pool); tables created via `npm run db:push`
+- DB seeded: playbook v1.1.0, 6 rules (verified via GET /playbook)
 - web — static shell: upload input, Check button, empty results list w/ verdict-pill + grounding-badge markup + CSS (upload/Check still NO wiring)
 - web — playbook render (display plumbing): App.tsx fetches GET /playbook on mount, renders envelope meta + rules (clause/id/priority/preferred) read-only, w/ loading + error states
 - package.json + tsconfig for api & web; drizzle.config.ts; Dockerfiles; .env.example
 - npm install run in both api/ and web/
 
 ## STUBBED (throw TODO(John) — John implements live)
-- api/src/services/seed.ts — load playbook.saas.json into playbook_rules (one row/rule)
 - api/src/services/chunk.ts — split raw_text into labeled chunks (~paragraph granularity; byte-faithful for firewall)
 - api/src/services/embed.ts — chunk text -> 1536-dim vectors (OpenAI text-embedding-3-small; Redis cache by sha256(chunkText))
 - api/src/services/ingest.ts — hash-dedup -> store -> chunk -> embed -> store chunks
@@ -59,7 +61,7 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - Full spec: SPEC.md
 
 ## BUILD ORDER (live)
-seed -> chunk -> embed -> ingest -> wire upload -> retrieve -> flag -> firewall (+test) -> escalate -> analyze(+result cache) -> /analysis -> SSE -> frontend toggle
+~~seed~~ -> chunk -> embed -> ingest -> wire upload -> retrieve -> flag -> firewall (+test) -> escalate -> analyze(+result cache) -> /analysis -> SSE -> frontend toggle
 
 ## NEXT
-- Start at `seed`: read playbook.saas.json, insert into playbook_rules
+- `chunk`: split a contract's raw_text on section-header boundaries (regex) into labeled, byte-faithful chunks

@@ -1,18 +1,33 @@
 import { Router } from "express";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { desc, asc } from "drizzle-orm";
+import { db } from "../db/client";
+import { playbooks, playbookRules } from "../db/schema";
 
 const router = Router();
 
-// Serve the existing playbook off disk. DB-backed later.
-const PLAYBOOK_PATH =
-  process.env.PLAYBOOK_PATH ??
-  path.resolve(process.cwd(), "../data/playbook.saas.json");
-
+// Serve the playbook from the DB (seeded via `npm run db:seed`).
+// Reconstructs the original envelope: latest playbook row's meta + its rules,
+// rules returned in insertion order (matches the source JSON order).
 router.get("/playbook", async (_req, res) => {
   try {
-    const raw = await readFile(PLAYBOOK_PATH, "utf8");
-    res.type("application/json").send(raw);
+    const [pb] = await db
+      .select()
+      .from(playbooks)
+      .orderBy(desc(playbooks.createdAt))
+      .limit(1);
+
+    if (!pb) {
+      return res
+        .status(404)
+        .json({ error: "no playbook seeded", hint: "run: npm run db:seed" });
+    }
+
+    const rows = await db
+      .select({ ruleJson: playbookRules.ruleJson })
+      .from(playbookRules)
+      .orderBy(asc(playbookRules.id));
+
+    res.json({ ...(pb.meta as object), rules: rows.map((r) => r.ruleJson) });
   } catch (err) {
     res
       .status(500)
