@@ -13,8 +13,9 @@
     "db:seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/anthropic": "^1.2.12",
     "@ai-sdk/openai": "^1.0.0",
+    "@anthropic-ai/sdk": "^0.113.0",
     "ai": "^4.0.0",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.36.0",

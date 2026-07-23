@@ -8,7 +8,7 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - DB: Postgres 16 + pgvector, Drizzle ORM (node-postgres driver)
 - Cache: Redis via ioredis
 - Orchestration: Docker Compose (postgres, redis, api, web)
-- Installed-but-unwired: `ai`, `@ai-sdk/openai`, `@ai-sdk/anthropic`
+- LLM SDKs: OpenAI embeddings via `ai` + `@ai-sdk/openai` (v4 line); Claude (flag+firewall) via OFFICIAL `@anthropic-ai/sdk` (0.113.0) — NOT `@ai-sdk/anthropic` (v4 provider sends deprecated `temperature` that claude-sonnet-5 rejects; the fix needs AI SDK v5). `@ai-sdk/anthropic` pinned ^1.2.12, effectively unused.
 
 ## BUILT (real plumbing)
 - docker-compose.yml — pgvector/pg16, redis:7, api, web; named pg volume; anon node_modules volumes; api bind-mount + tsx watch
