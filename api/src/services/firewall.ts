@@ -1,27 +1,29 @@
 // CITATION FIREWALL — the hard gate between flag() and the user. The core of the product.
 //
-// flag() produced a verdict + a citedText quote. Before that quote is ever shown as
+// flag() produced a verdict + a citedSpan quote. Before that quote is ever shown as
 // trustworthy, the firewall answers two INDEPENDENT questions:
-//   (a) Is the quote real?  — deterministic. Does citedText appear VERBATIM in the
+//   (a) Is the quote real?  — deterministic. Does citedSpan appear VERBATIM in the
 //       contract's untouched raw_text? We check the source ourselves, not the model's word.
 //   (b) Does the quote support the verdict?  — a second, cheaper, INDEPENDENT LLM (Haiku)
 //       confirms the cited language genuinely backs the flag.
 //
-// Labels:
-//   verified     — (a) passed and (b) confirmed. Safe to surface.
-//   needs-review — (a) passed but (b) was not confident. A human should look.
-//   fabricated   — (a) FAILED: the quote is not in the source. Quarantined; (b) never runs.
+// Labels (the firewall grades CITATIONS):
+//   verified       — had a citation; (a) real and (b) confirmed supportive. Safe to surface.
+//   needs-review   — a claim that a human should check: either (a) passed but (b) not confident,
+//                    OR a compliant/deviation verdict that asserts a claim yet cites nothing.
+//   fabricated     — (a) FAILED: the quote is not in the source. Quarantined; (b) never runs.
+//   not-applicable — no citation to grade because the verdict makes no claim (not-addressed).
 //
 // Why deterministic-first: an ungrounded legal citation is worse than no tool. The quote
 // must be proven present mechanically; only then do we spend an LLM call asking if it fits.
 import type { Flag } from "./flag";
 import { anthropic, JUDGE_MODEL } from "./claude";
 
-export type FirewallStatus = "verified" | "needs-review" | "fabricated";
+export type FirewallStatus = "verified" | "needs-review" | "fabricated" | "not-applicable";
 
 export type FirewallResult = {
   status: FirewallStatus;
-  grounded: boolean; // stage (a): citedText found verbatim (normalized) in raw_text
+  grounded: boolean; // stage (a): citedSpan found verbatim (normalized) in raw_text
   supportsVerdict: boolean | null; // stage (b): judge's call; null when (b) did not run
   reasoning: string; // human-readable explanation of the status
 };
@@ -41,22 +43,32 @@ export function normalizeForMatch(s: string): string {
 }
 
 export async function firewall(flag: Flag, rawText: string): Promise<FirewallResult> {
-  const citedText = flag.citedText?.trim() ?? "";
+  const citedSpan = flag.citedSpan?.trim() ?? "";
 
-  // No citation to verify (e.g. not-addressed makes no textual claim). Nothing can be
-  // fabricated, so the surfaced result is trustworthy — but grounded=false records that
-  // there is no verified quote to display.
-  if (!citedText) {
+  // No citation to grade. The firewall grades citations, so the meaning depends on the verdict:
+  if (!citedSpan) {
+    // not-addressed makes no textual claim -> there is nothing to verify.
+    if (flag.verdict === "not-addressed") {
+      return {
+        status: "not-applicable",
+        grounded: false,
+        supportsVerdict: null,
+        reasoning: "No citation to verify — a not-addressed verdict makes no textual claim.",
+      };
+    }
+    // Dangerous: a compliant/deviation verdict asserts a claim but cites nothing to ground it.
+    console.log(`[firewall] ${flag.ruleId} -> NEEDS-REVIEW (claim with no citation)`);
     return {
-      status: "verified",
+      status: "needs-review",
       grounded: false,
       supportsVerdict: null,
-      reasoning: "No citation to verify — the verdict makes no textual claim.",
+      reasoning:
+        "The verdict asserts a claim but provides no citation to verify. Flagged for human review.",
     };
   }
 
   // Stage (a) — deterministic grounding. This is the firewall's teeth.
-  const grounded = normalizeForMatch(rawText).includes(normalizeForMatch(citedText));
+  const grounded = normalizeForMatch(rawText).includes(normalizeForMatch(citedSpan));
   if (!grounded) {
     console.log(`[firewall] ${flag.ruleId} -> FABRICATED (cited text not found in raw_text)`);
     return {
@@ -69,7 +81,7 @@ export async function firewall(flag: Flag, rawText: string): Promise<FirewallRes
   }
 
   // Stage (b) — independent, cheaper LLM confirms the grounded quote supports the verdict.
-  const check = await judgeSupport(flag, citedText);
+  const check = await judgeSupport(flag, citedSpan);
   const status: FirewallStatus = check.supports ? "verified" : "needs-review";
   console.log(
     `[firewall] ${flag.ruleId} -> ${status.toUpperCase()} (grounded, judge supports=${check.supports})`,
@@ -107,7 +119,7 @@ const RECORD_CHECK_TOOL = {
 
 type Support = { supports: boolean; reasoning: string };
 
-async function judgeSupport(flag: Flag, citedText: string): Promise<Support> {
+async function judgeSupport(flag: Flag, citedSpan: string): Promise<Support> {
   const userText = [
     `A contract-review model reached a verdict about one playbook rule and cited a specific quote from the contract as support. Your ONLY job is to confirm whether that quote genuinely supports that verdict. Do not re-analyze the whole contract; judge only the quote against the verdict.`,
     ``,
@@ -117,7 +129,7 @@ async function judgeSupport(flag: Flag, citedText: string): Promise<Support> {
     ``,
     `Cited contract text:`,
     `"""`,
-    citedText,
+    citedSpan,
     `"""`,
     ``,
     `Does this quote, on its own, genuinely support the "${flag.verdict}" verdict for this rule? Record your answer with the record_check tool.`,

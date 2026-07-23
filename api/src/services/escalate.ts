@@ -8,7 +8,7 @@
 //   - email when the verdict is a deviation or the required clause is not-addressed.
 //
 // Caller contract: analyze() must not pass a flag whose firewall status is `fabricated` — an
-// escalation must never cite ungrounded text. The email quotes flag.citedText verbatim (already
+// escalation must never cite ungrounded text. The email quotes flag.citedSpan verbatim (already
 // firewall-grounded for deviations; empty for not-addressed, where the email notes the gap).
 import type { Flag, Rule } from "./flag";
 import { anthropic, JUDGE_MODEL } from "./claude";
@@ -22,7 +22,7 @@ export type EscalationEmail = {
   triggeredBy: {
     verdict: Flag["verdict"];
     clause: string;
-    citedText: string; // grounded contract text; "" for not-addressed
+    citedSpan: string; // grounded contract text; "" for not-addressed
   };
 };
 
@@ -48,7 +48,7 @@ export async function escalate(
     team,
     subject,
     body,
-    triggeredBy: { verdict: flag.verdict, clause: rule.clause, citedText: flag.citedText },
+    triggeredBy: { verdict: flag.verdict, clause: rule.clause, citedSpan: flag.citedSpan },
   };
 }
 
@@ -74,7 +74,7 @@ async function draftBody(
     `Why ${team}: ${rule.escalation?.trigger ?? "clause falls under this team's remit."}`,
     `Situation: ${concern}`,
     `Reviewer's reasoning: ${flag.reasoning}`,
-    flag.citedText ? `Relevant contract text: "${flag.citedText}"` : `(No corresponding clause text — the provision is absent.)`,
+    flag.citedSpan ? `Relevant contract text: "${flag.citedSpan}"` : `(No corresponding clause text — the provision is absent.)`,
     ``,
     `Keep it under 150 words, professional and specific. State what was found and ask the team to review.`,
   ].join("\n");

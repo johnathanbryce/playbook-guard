@@ -13,7 +13,7 @@
 // The coverage bar (0.70) is NOT applied here — it lives in analyze(), which aggregates
 // topSimilarity across rules into a per-contract coverage metric.
 //
-// The output is designed for the firewall: `citedText` MUST be a verbatim substring of a
+// The output is designed for the firewall: `citedSpan` MUST be a verbatim substring of a
 // retrieved passage (and therefore of raw_text), so the firewall can ground it deterministically.
 import { eq } from "drizzle-orm";
 import { db } from "../db/client";
@@ -40,7 +40,7 @@ export type Flag = {
   ruleId: string;
   clause: string;
   verdict: Verdict;
-  citedText: string; // verbatim quote from a retrieved passage; "" when not-addressed
+  citedSpan: string; // verbatim quote from a retrieved passage; "" when not-addressed
   reasoning: string;
   topSimilarity: number; // top-1 retrieval similarity (analyze applies the 0.70 coverage bar)
   shortCircuited: boolean; // true if the floor skipped the LLM
@@ -69,7 +69,7 @@ export async function flag(ruleId: string, contractId: number): Promise<Flag> {
       ruleId,
       clause: rule.clause,
       verdict: "not-addressed",
-      citedText: "",
+      citedSpan: "",
       reasoning: `No contract section is semantically close to this rule (top similarity ${topSimilarity.toFixed(3)} is below the ${FLOOR} floor), so the contract is treated as not addressing it.`,
       topSimilarity,
       shortCircuited: true,
@@ -81,18 +81,18 @@ export async function flag(ruleId: string, contractId: number): Promise<Flag> {
   const judged = await judge(rule, hits, topSimilarity);
 
   // not-addressed carries no citation; enforce it so the firewall never grounds a stray quote.
-  const citedText = judged.verdict === "not-addressed" ? "" : judged.citedText.trim();
+  const citedSpan = judged.verdict === "not-addressed" ? "" : judged.citedSpan.trim();
 
   console.log(
     `[flag] ${ruleId} contract #${contractId} -> ${judged.verdict} (top sim ${topSimilarity.toFixed(3)})` +
-      (citedText ? ` cite="${citedText.slice(0, 60).replace(/\n/g, " ")}…"` : ""),
+      (citedSpan ? ` cite="${citedSpan.slice(0, 60).replace(/\n/g, " ")}…"` : ""),
   );
 
   return {
     ruleId,
     clause: rule.clause,
     verdict: judged.verdict,
-    citedText,
+    citedSpan,
     reasoning: judged.reasoning,
     topSimilarity,
     shortCircuited: false,
@@ -115,7 +115,7 @@ const RECORD_VERDICT_TOOL = {
         description:
           "compliant = the passages satisfy the rule's preferred position; deviation = they address the topic but weaken, violate, or fall short of it (especially any hardStop); not-addressed = the passages do not cover this rule's topic at all.",
       },
-      citedText: {
+      citedSpan: {
         type: "string",
         description:
           "A VERBATIM quote copied character-for-character from ONE of the provided passages that most directly supports the verdict. Do not paraphrase, reformat, or add ellipses inside the quote. Use an empty string ONLY when verdict is not-addressed.",
@@ -126,11 +126,11 @@ const RECORD_VERDICT_TOOL = {
           "1-3 sentences explaining the verdict with reference to the specific contract language and the rule's preferred position / hardStop.",
       },
     },
-    required: ["verdict", "citedText", "reasoning"],
+    required: ["verdict", "citedSpan", "reasoning"],
   },
 };
 
-type Judged = { verdict: Verdict; citedText: string; reasoning: string };
+type Judged = { verdict: Verdict; citedSpan: string; reasoning: string };
 
 async function judge(rule: Rule, hits: Retrieved[], topSimilarity: number): Promise<Judged> {
   const passages = hits
@@ -160,7 +160,7 @@ async function judge(rule: Rule, hits: Retrieved[], topSimilarity: number): Prom
     ``,
     confidenceHint,
     ``,
-    `Judge these passages against the rule and record your verdict via the record_verdict tool. The citedText must be copied verbatim from a passage above.`,
+    `Judge these passages against the rule and record your verdict via the record_verdict tool. The citedSpan must be copied verbatim from a passage above.`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -180,8 +180,8 @@ async function judge(rule: Rule, hits: Retrieved[], topSimilarity: number): Prom
     throw new Error(`flag: judge did not return a tool_use block for rule "${rule.id}"`);
   }
   const input = block.input as Partial<Judged>;
-  if (!input.verdict || typeof input.citedText !== "string" || !input.reasoning) {
+  if (!input.verdict || typeof input.citedSpan !== "string" || !input.reasoning) {
     throw new Error(`flag: judge returned malformed verdict for rule "${rule.id}"`);
   }
-  return { verdict: input.verdict, citedText: input.citedText, reasoning: input.reasoning };
+  return { verdict: input.verdict, citedSpan: input.citedSpan, reasoning: input.reasoning };
 }

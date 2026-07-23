@@ -18,7 +18,7 @@ function makeFlag(over: Partial<Flag> = {}): Flag {
     ruleId: "limitation-of-liability",
     clause: "Limitation of Liability",
     verdict: "deviation",
-    citedText: "",
+    citedSpan: "",
     reasoning: "test reasoning",
     topSimilarity: 0.8,
     shortCircuited: false,
@@ -64,7 +64,7 @@ describe("firewall — deterministic grounding gate (no LLM call)", () => {
   // the firewall must NOT spend an LLM call on it — the deterministic check has final say.
   it("returns fabricated for a citation that is not in the source, without calling the judge", async () => {
     const flag = makeFlag({
-      citedText: "Provider shall pay Customer one billion dollars for any breach whatsoever.",
+      citedSpan: "Provider shall pay Customer one billion dollars for any breach whatsoever.",
     });
 
     const result = await firewall(flag, raw);
@@ -79,7 +79,7 @@ describe("firewall — deterministic grounding gate (no LLM call)", () => {
   // This is the subtle half of the money case: normalization must NOT let paraphrase pass.
   it("returns fabricated for a paraphrase that only near-matches the source", async () => {
     const flag = makeFlag({
-      citedText: "Provider's total aggregate liability shall not exceed the fees paid in the prior six (6) months.",
+      citedSpan: "Provider's total aggregate liability shall not exceed the fees paid in the prior six (6) months.",
     });
 
     const result = await firewall(flag, raw);
@@ -88,13 +88,25 @@ describe("firewall — deterministic grounding gate (no LLM call)", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  // not-addressed carries no citation: nothing to fabricate, nothing to judge -> verified.
-  it("returns verified (grounded:false) for an empty citation and skips the judge", async () => {
-    const flag = makeFlag({ verdict: "not-addressed", citedText: "" });
+  // not-addressed makes no textual claim: nothing to grade -> not-applicable (NOT verified).
+  it("returns not-applicable for a not-addressed flag with no citation, and skips the judge", async () => {
+    const flag = makeFlag({ verdict: "not-addressed", citedSpan: "" });
 
     const result = await firewall(flag, raw);
 
-    expect(result.status).toBe("verified");
+    expect(result.status).toBe("not-applicable");
+    expect(result.grounded).toBe(false);
+    expect(result.supportsVerdict).toBeNull();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  // The dangerous case: a verdict that ASSERTS a claim but cites nothing -> needs-review.
+  it("returns needs-review when a compliant/deviation verdict has an empty citation", async () => {
+    const flag = makeFlag({ verdict: "deviation", citedSpan: "" });
+
+    const result = await firewall(flag, raw);
+
+    expect(result.status).toBe("needs-review");
     expect(result.grounded).toBe(false);
     expect(result.supportsVerdict).toBeNull();
     expect(create).not.toHaveBeenCalled();
@@ -110,7 +122,7 @@ describe("firewall — grounded citation is handed to the judge", () => {
 
   it("returns verified when the quote is grounded and the judge confirms support", async () => {
     judgeReturns(true, "The quote establishes the definition.");
-    const flag = makeFlag({ verdict: "compliant", citedText: groundedCite });
+    const flag = makeFlag({ verdict: "compliant", citedSpan: groundedCite });
 
     const result = await firewall(flag, raw);
 
@@ -122,7 +134,7 @@ describe("firewall — grounded citation is handed to the judge", () => {
 
   it("returns needs-review when the quote is grounded but the judge is not convinced", async () => {
     judgeReturns(false, "The quote is off-topic for this verdict.");
-    const flag = makeFlag({ verdict: "deviation", citedText: groundedCite });
+    const flag = makeFlag({ verdict: "deviation", citedSpan: groundedCite });
 
     const result = await firewall(flag, raw);
 
@@ -134,7 +146,7 @@ describe("firewall — grounded citation is handed to the judge", () => {
 
   it("throws when the grounded-path judge returns a malformed response", async () => {
     create.mockResolvedValueOnce({ content: [{ type: "text", text: "no tool call here" }] });
-    const flag = makeFlag({ verdict: "deviation", citedText: groundedCite });
+    const flag = makeFlag({ verdict: "deviation", citedSpan: groundedCite });
 
     await expect(firewall(flag, raw)).rejects.toThrow(/tool_use/);
   });
