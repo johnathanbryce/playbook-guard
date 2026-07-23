@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // Read-only: lazy-fetch the DB-served playbook the first time the panel opens.
 // Upload input + button wired to POST /contracts (ingest: chunk + embed + store).
@@ -29,6 +29,74 @@ type Playbook = {
   rules?: Rule[];
 };
 
+// --- analysis pipeline (SSE /stream) ---
+type FirewallStatus = "verified" | "needs-review" | "fabricated" | "not-applicable";
+
+type EscalationEmail = {
+  id: string;
+  ruleId: string;
+  team: string;
+  subject: string;
+  body: string;
+};
+
+type RuleResult = {
+  ruleId: string;
+  clause: string;
+  priority: string | null;
+  verdict: "compliant" | "deviation" | "not-addressed";
+  reasoning: string;
+  citedSpan: string;
+  topSimilarity: number;
+  coverageHit: boolean;
+  firewall: {
+    status: FirewallStatus;
+    grounded: boolean;
+    supportsVerdict: boolean | null;
+    reasoning: string;
+  };
+  escalation: EscalationEmail | null;
+};
+
+type AnalysisMeta = {
+  contractId: number;
+  filename: string;
+  playbookVersion: string;
+  escalations: EscalationEmail[];
+  summary: {
+    ruleCount: number;
+    coverage: { covered: number; total: number };
+    verdicts: { compliant: number; deviation: number; notAddressed: number };
+    firewall: { verified: number; needsReview: number; fabricated: number; notApplicable: number };
+    escalationCount: number;
+  };
+  cached: boolean;
+  generatedAt: string;
+};
+
+const pillBase = {
+  padding: "0.1rem 0.5rem",
+  borderRadius: "999px",
+  fontSize: "0.72rem",
+  fontWeight: 600,
+} as const;
+
+const verdictStyle = (v: string) =>
+  v === "compliant"
+    ? { background: "#e6f4ea", color: "#1e7e34" }
+    : v === "deviation"
+      ? { background: "#fdecea", color: "#c0392b" }
+      : { background: "#eef0f2", color: "#5f6b7a" };
+
+const fwStyle = (s: FirewallStatus) =>
+  s === "verified"
+    ? { background: "#e6f4ea", color: "#1e7e34" }
+    : s === "needs-review"
+      ? { background: "#fff4e5", color: "#b26a00" }
+      : s === "fabricated"
+        ? { background: "#fdecea", color: "#c0392b" }
+        : { background: "#eef0f2", color: "#5f6b7a" };
+
 export default function App() {
   const [playbook, setPlaybook] = useState<Playbook | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,6 +108,54 @@ export default function App() {
   const [uploading, setUploading] = useState(false);
   const [ingest, setIngest] = useState<IngestResult | null>(null);
   const [ingestError, setIngestError] = useState<string | null>(null);
+
+  // Analysis (SSE) state.
+  const [analyzing, setAnalyzing] = useState(false);
+  const [flags, setFlags] = useState<RuleResult[]>([]);
+  const [analysis, setAnalysis] = useState<AnalysisMeta | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const esRef = useRef<EventSource | null>(null);
+
+  // Close any open stream on unmount.
+  useEffect(() => () => esRef.current?.close(), []);
+
+  function startAnalysis(contractId: number) {
+    esRef.current?.close();
+    setFlags([]);
+    setAnalysis(null);
+    setAnalysisError(null);
+    setAnalyzing(true);
+
+    // Same analyze() pipeline as GET /analysis, but streamed: one `rule` event per rule as it
+    // lands, then a final `done` event with the aggregate meta. Close on done/error so the
+    // browser's EventSource does not auto-reconnect and re-run the analysis.
+    const es = new EventSource(`${API_URL}/stream?contractId=${contractId}`);
+    esRef.current = es;
+
+    es.addEventListener("rule", (e) => {
+      const rule = JSON.parse((e as MessageEvent).data) as RuleResult;
+      setFlags((prev) => [...prev, rule]);
+    });
+    es.addEventListener("done", (e) => {
+      setAnalysis(JSON.parse((e as MessageEvent).data) as AnalysisMeta);
+      setAnalyzing(false);
+      es.close();
+    });
+    es.addEventListener("error", (e) => {
+      const data = (e as MessageEvent).data;
+      let msg = "stream connection error";
+      if (data) {
+        try {
+          msg = JSON.parse(data).error;
+        } catch {
+          msg = "stream error";
+        }
+      }
+      setAnalysisError(msg);
+      setAnalyzing(false);
+      es.close();
+    });
+  }
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setFile(e.target.files?.[0] ?? null);
@@ -239,6 +355,104 @@ export default function App() {
           <p className="results__empty">
             No contract ingested yet. Choose a .txt and upload.
           </p>
+        )}
+
+        {/* Analysis — stream per-rule verdicts via SSE /stream */}
+        {ingest && (
+          <div className="analysis" style={{ marginTop: "1rem" }}>
+            <button
+              className="controls__check"
+              type="button"
+              onClick={() => startAnalysis(ingest.contractId)}
+              disabled={analyzing}
+            >
+              {analyzing ? "Analyzing…" : "Analyze against playbook"}
+            </button>
+
+            {analysisError && (
+              <p className="results__empty results__empty--error">
+                Analysis failed: {analysisError}
+              </p>
+            )}
+
+            {flags.length > 0 && (
+              <ul className="rules" style={{ marginTop: "1rem" }}>
+                {flags.map((f) => (
+                  <li className="rule" key={f.ruleId}>
+                    <div
+                      className="rule__head"
+                      style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}
+                    >
+                      <span className="rule__clause">{f.clause}</span>
+                      <span style={{ ...pillBase, ...verdictStyle(f.verdict) }}>{f.verdict}</span>
+                      <span
+                        style={{ ...pillBase, ...fwStyle(f.firewall.status) }}
+                        title={f.firewall.reasoning}
+                      >
+                        grounding: {f.firewall.status}
+                      </span>
+                      {f.escalation && (
+                        <span style={{ ...pillBase, background: "#eae6f7", color: "#5b3fa8" }}>
+                          escalate → {f.escalation.team}
+                        </span>
+                      )}
+                    </div>
+                    {f.firewall.grounded && f.citedSpan && (
+                      <p className="rule__preferred">
+                        <span className="rule__label">Cited span</span>“{f.citedSpan}”
+                      </p>
+                    )}
+                    <p className="rule__preferred">
+                      <span className="rule__label">Reasoning</span>
+                      {f.reasoning}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {analysis && (
+              <div className="analysis__summary" style={{ marginTop: "1rem" }}>
+                <p>
+                  Coverage {analysis.summary.coverage.covered}/{analysis.summary.coverage.total} · verified{" "}
+                  {analysis.summary.firewall.verified} · needs-review {analysis.summary.firewall.needsReview} ·
+                  fabricated {analysis.summary.firewall.fabricated} · n/a{" "}
+                  {analysis.summary.firewall.notApplicable}
+                  {analysis.cached ? " · (cached)" : ""}
+                </p>
+
+                {analysis.escalations.length > 0 && (
+                  <div className="escalations">
+                    <h4>Escalation drafts ({analysis.escalations.length})</h4>
+                    {analysis.escalations.map((em) => (
+                      <div
+                        key={em.id}
+                        style={{ border: "1px solid #ddd", borderRadius: 8, padding: "0.75rem", marginBottom: "0.5rem" }}
+                      >
+                        <div>
+                          <strong>To:</strong> {em.team}
+                        </div>
+                        <div>
+                          <strong>Subject:</strong> {em.subject}
+                        </div>
+                        <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: "0.5rem 0" }}>
+                          {em.body}
+                        </pre>
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <button type="button" disabled title="Display only — no email is sent">
+                            Send
+                          </button>
+                          <button type="button" disabled title="Display only">
+                            Deny
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </section>
     </div>
