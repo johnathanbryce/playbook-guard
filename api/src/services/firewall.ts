@@ -99,18 +99,19 @@ export async function firewall(flag: Flag, rawText: string): Promise<FirewallRes
 const RECORD_CHECK_TOOL = {
   name: "record_check",
   description:
-    "Record whether the cited contract text genuinely supports the stated verdict for this rule.",
+    "Record whether the cited contract text is genuine, on-point evidence consistent with the stated verdict for this rule.",
   input_schema: {
     type: "object" as const,
     properties: {
       supports: {
         type: "boolean",
         description:
-          "true only if the quoted contract text, on its own, genuinely justifies the stated verdict for this rule. false if the quote is off-topic, insufficient, or does not actually establish the verdict.",
+          "true if the quote is on-topic for this rule AND consistent with the verdict — i.e. it is relevant evidence and does not contradict or misrepresent the verdict. false ONLY if the quote is off-topic (wrong subject), contradicts the verdict, or misstates what the contract says. Do NOT answer false merely because the quote is one piece of a multi-part rule or does not by itself prove every element — completeness is the flagging model's job, not yours.",
       },
       reasoning: {
         type: "string",
-        description: "1-2 sentences explaining whether and how the quote supports the verdict.",
+        description:
+          "1-2 sentences: is the quote on-topic and consistent with the verdict, or is it off-topic / contradictory / misrepresented?",
       },
     },
     required: ["supports", "reasoning"],
@@ -121,7 +122,7 @@ type Support = { supports: boolean; reasoning: string };
 
 async function judgeSupport(flag: Flag, citedSpan: string): Promise<Support> {
   const userText = [
-    `A contract-review model reached a verdict about one playbook rule and cited a specific quote from the contract as support. Your ONLY job is to confirm whether that quote genuinely supports that verdict. Do not re-analyze the whole contract; judge only the quote against the verdict.`,
+    `A contract-review model reached a verdict about one playbook rule and cited a specific quote from the contract as its evidence. Your job is to catch FABRICATED or MISLEADING citations — not to re-judge the whole clause. Confirm the quote is genuine, on-point evidence consistent with the verdict.`,
     ``,
     `Playbook rule: ${flag.clause}`,
     `Verdict claimed: ${flag.verdict}`,
@@ -132,14 +133,14 @@ async function judgeSupport(flag: Flag, citedSpan: string): Promise<Support> {
     citedSpan,
     `"""`,
     ``,
-    `Does this quote, on its own, genuinely support the "${flag.verdict}" verdict for this rule? Record your answer with the record_check tool.`,
+    `Is this quote on-topic for this rule and consistent with the "${flag.verdict}" verdict? Answer supports=false ONLY if it is off-topic, contradicts the verdict, or misrepresents the contract. Do NOT answer false just because one quote doesn't cover every element of a multi-part rule — completeness is not your concern. Record your answer with the record_check tool.`,
   ].join("\n");
 
   const msg = await anthropic.messages.create({
     model: JUDGE_MODEL,
     max_tokens: 512,
     system:
-      "You are an independent citation checker. You confirm that a quoted piece of contract text actually supports a stated compliance verdict. You are skeptical: if the quote does not clearly establish the verdict, you answer supports=false.",
+      "You are an independent citation checker for a contract-review tool. Another model reached a verdict and cited a quote as evidence; you catch fabricated or misleading citations. You confirm the quote is genuine, on-point evidence CONSISTENT with the verdict. You do NOT re-judge the whole clause or demand that one quote prove every element — you answer supports=false only when the quote is off-topic, contradicts the verdict, or misrepresents the contract.",
     tools: [RECORD_CHECK_TOOL],
     tool_choice: { type: "tool", name: "record_check" },
     messages: [{ role: "user", content: userText }],
