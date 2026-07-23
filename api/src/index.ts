@@ -3,6 +3,7 @@ import cors from "cors";
 import playbookRouter from "./routes/playbook";
 import contractsRouter from "./routes/contracts";
 import { streamHandler } from "./routes/stream";
+import { analysisHandler } from "./routes/analysis";
 
 const app = express();
 app.use(cors());
@@ -14,6 +15,7 @@ app.get("/health", (_req, res) => {
 
 app.use(playbookRouter);
 app.use(contractsRouter);
+app.get("/analysis", analysisHandler);
 app.get("/stream", streamHandler);
 
 const PORT = Number(process.env.PORT ?? 3001);
