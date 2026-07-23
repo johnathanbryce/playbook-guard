@@ -1,0 +1,39 @@
+MUTUAL NON-DISCLOSURE AGREEMENT — Meridian Labs, LLC ("Discloser/Recipient") and Counterparty
+
+1. PURPOSE
+1.1 The parties wish to explore a potential business relationship (the "Purpose") and, in connection with the Purpose, each party may disclose to the other certain confidential and proprietary information. This Agreement governs the protection and permitted use of that information.
+
+2. DEFINITION OF CONFIDENTIAL INFORMATION
+2.1 "Confidential Information" means any non-public information disclosed by one party (the "Disclosing Party") to the other (the "Receiving Party"), whether orally, in writing, or by inspection of tangible objects, that is designated as confidential or that reasonably should be understood to be confidential given the nature of the information and the circumstances of disclosure.
+2.2 Confidential Information includes, without limitation, business plans, financial information, customer and supplier lists, product designs, source code, research, and technical specifications.
+
+3. OBLIGATIONS OF RECEIVING PARTY
+3.1 The Receiving Party shall hold the Disclosing Party's Confidential Information in strict confidence and shall not disclose it to any third party without the prior written consent of the Disclosing Party.
+3.2 The Receiving Party shall use the Confidential Information solely for the Purpose and shall protect it using the same degree of care it uses for its own confidential information of like importance, but in no event less than a reasonable degree of care.
+3.3 The Receiving Party may disclose Confidential Information to its employees and advisors who have a need to know for the Purpose and who are bound by confidentiality obligations no less protective than those in this Agreement.
+
+4. EXCLUSIONS FROM CONFIDENTIAL INFORMATION
+4.1 Confidential Information does not include information that: (a) is or becomes publicly available through no fault of the Receiving Party; (b) was rightfully known to the Receiving Party without restriction before disclosure; (c) is rightfully received from a third party without breach of any obligation; or (d) is independently developed by the Receiving Party without use of the Confidential Information.
+
+5. COMPELLED DISCLOSURE
+5.1 The Receiving Party may disclose Confidential Information to the extent required by law or court order, provided that it gives the Disclosing Party prompt written notice (where legally permitted) and reasonable assistance to contest or limit the scope of the required disclosure.
+
+6. TERM AND SURVIVAL
+6.1 This Agreement commences on the date of last signature and continues for two (2) years, unless earlier terminated by either party on thirty (30) days' written notice.
+6.2 The confidentiality obligations in this Agreement survive termination and remain in effect for three (3) years following the date of disclosure of the relevant Confidential Information.
+
+7. RETURN OR DESTRUCTION OF MATERIALS
+7.1 Upon the Disclosing Party's written request, the Receiving Party shall promptly return or destroy all tangible materials embodying Confidential Information and, upon request, certify in writing that it has done so, except for one archival copy retained solely for legal-compliance purposes.
+
+8. NO LICENSE; NO OBLIGATION
+8.1 Nothing in this Agreement grants the Receiving Party any license or right, by implication or otherwise, to any intellectual property of the Disclosing Party except the limited right to use Confidential Information for the Purpose.
+8.2 Nothing in this Agreement obligates either party to proceed with any transaction, and each party may terminate discussions at any time.
+
+9. INJUNCTIVE RELIEF
+9.1 The parties agree that a breach of this Agreement may cause irreparable harm for which monetary damages would be an inadequate remedy, and that the non-breaching party is entitled to seek injunctive relief in addition to any other remedies available at law or in equity.
+
+10. GOVERNING LAW
+10.1 This Agreement is governed by the laws of the State of Delaware, without regard to its conflict-of-laws principles. The parties consent to the exclusive jurisdiction of the state and federal courts located in Delaware.
+
+11. GENERAL
+11.1 This Agreement constitutes the entire agreement between the parties regarding its subject matter and supersedes all prior discussions. It may be amended only by a writing signed by both parties. Neither party may assign this Agreement without the other's prior written consent. If any provision is held unenforceable, the remaining provisions remain in full force and effect.
