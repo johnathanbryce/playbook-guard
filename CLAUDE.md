@@ -28,14 +28,16 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - api/src/routes/contracts.ts — DONE: POST /contracts, multer memoryStorage (5MB), field "file"; .txt-only (mimetype OR ext), 400 empty/no-file, 415 non-txt; 201 fresh / 200 dedup. Verified: upload high-fidelity -> 15 chunks stored (dim 1536); re-upload -> deduped:true, chunk+embed skipped
 - Vitest testing: host-only devDep; tsconfig excludes **/*.test.ts so container `tsc --noEmit` stays clean (tests run on host via `npm test`)
 - curl verify: `curl -s -X POST http://localhost:3001/contracts -F "file=@data/contracts/contract-high-fidelity.txt"`
+- api/src/services/retrieve.ts — DONE: generic `retrieve(query, {contractId, k=3})`; embed(query) -> cosineDistance(`<=>`, HNSW-matched) top-k WHERE contract_id; returns {chunkId, chunkText, sectionLabel, distance, similarity}. No threshold (flag decides not-addressed)
+- api/src/services/rule-query.ts — DONE: `ruleToQuery(rule)` = clause + preferred (generic retriever stays playbook-agnostic)
+- Retrieval eval (contract #1): all 6 rules retrieve expected section at rank #1 (sim 0.72–0.85); service-levels-termination + auto-renewal-pricing correctly surface their 2nd relevant section at #2
 - web — upload WIRED: file input (.txt) + "Upload & ingest" button -> POST /contracts (FormData field "file"); busy state ("Ingesting…"), ingest result card (contractId / chunkCount / new-vs-Dedup pill), error line. Analysis results list still pending (needs analyze+SSE)
 - web — playbook render (display plumbing): App.tsx fetches GET /playbook on mount, renders envelope meta + rules (clause/id/priority/preferred) read-only, w/ loading + error states
 - package.json + tsconfig for api & web; drizzle.config.ts; Dockerfiles; .env.example
 - npm install run in both api/ and web/
 
 ## STUBBED (throw TODO(John) — John implements live)
-- api/src/services/retrieve.ts — cosine top-k over chunks; SIG CHANGE -> add contractId filter (scope search to one contract)  <-- NEXT
-- api/src/services/flag.ts — flagger Claude judges top-k passages vs one rule -> {verdict: compliant|deviation|not-addressed, citedText, reasoning}
+- api/src/services/flag.ts — flagger Claude judges top-k passages vs one rule -> {verdict: compliant|deviation|not-addressed, citedText, reasoning}  <-- NEXT
 - api/src/services/firewall.ts — HARD GATE, core of product. SIG CHANGE -> firewall(flag, rawText). (a) deterministic normalized-substring check of citedText in raw_text; (b) cheaper Claude judge confirms quote supports verdict -> verified|needs-review|fabricated
 - api/src/services/escalate.ts — REPURPOSED -> draft text-only dept email for a rule's escalation.team (was: route to stronger model). SIG: escalate(flag, rule, filename)
 - api/src/routes/contracts.ts — POST /contracts: upload .txt -> ingest() -> chunk/embed/store (router mounted; body stubbed)
@@ -68,4 +70,4 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 ~~seed~~ -> chunk -> embed -> ingest -> wire upload -> retrieve -> flag -> firewall (+test) -> escalate -> analyze(+result cache) -> /analysis -> SSE -> frontend toggle
 
 ## NEXT
-- `retrieve`: embed a per-rule query (clause+preferred+hardStop), pgvector cosine top-k over chunks WHERE contract_id = ? (scope to one contract); order by embedding <=> query
+- `flag`: load rule from playbook_rules, retrieve(ruleToQuery(rule), {contractId}), send ONLY top-k passages to flagger Claude -> {verdict: compliant|deviation|not-addressed, citedText (verbatim from a passage), reasoning}
