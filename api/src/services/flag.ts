@@ -33,6 +33,7 @@ export type Rule = {
   hardStop?: string;
   fallbacks?: string[];
   priority?: string;
+  escalation?: { team: string; trigger: string } | null;
 };
 
 export type Flag = {
