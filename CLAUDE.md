@@ -37,13 +37,14 @@ Succinct bullet tracker of status + high-level notes. Keep updated as we progres
 - npm install run in both api/ and web/
 
 ## STUBBED (throw TODO(John) — John implements live)
-- api/src/services/flag.ts — flagger Claude judges top-k passages vs one rule -> {verdict: compliant|deviation|not-addressed, citedText, reasoning}  <-- NEXT
+- api/src/services/flag.ts — flagger Claude (claude-sonnet-5, official @anthropic-ai/sdk) judges top-k passages vs one rule -> {verdict: compliant|deviation|not-addressed, citedText, reasoning}. SIMILARITY SIGNAL (see DECISIONS): if top-1 sim < FLOOR (~0.35, tunable) short-circuit to not-addressed w/o LLM call; else pass top-1 sim into the judge prompt as context (informs not-addressed, doesn't override). NO hard 0.6-style gate.  <-- NEXT
 - api/src/services/firewall.ts — HARD GATE, core of product. SIG CHANGE -> firewall(flag, rawText). (a) deterministic normalized-substring check of citedText in raw_text; (b) cheaper Claude judge confirms quote supports verdict -> verified|needs-review|fabricated
 - api/src/services/escalate.ts — REPURPOSED -> draft text-only dept email for a rule's escalation.team (was: route to stronger model). SIG: escalate(flag, rule, filename)
 - api/src/routes/contracts.ts — POST /contracts: upload .txt -> ingest() -> chunk/embed/store (router mounted; body stubbed)
 - api/src/routes/stream.ts — GET /stream?contractId= SSE: one `rule` event per rule (verdict+firewall status), final `done` summary (router mounted; body stubbed)
-- NEW api/src/services/analyze.ts — shared pipeline entry analyze(contractId); cache-checks (contract_hash+playbook_version), else runs retrieve->flag->firewall->escalate per rule; feeds BOTH /analysis and /stream
+- NEW api/src/services/analyze.ts — shared pipeline entry analyze(contractId); cache-checks (contract_hash+playbook_version), else runs retrieve->flag->firewall->escalate per rule; feeds BOTH /analysis and /stream. ADD coverage metric: count rules w/ confident on-topic match (top-1 sim >= ~0.7) -> summary.coverage e.g. "0/6" flags a wholly non-matching upload
 - NEW api/src/routes/analysis.ts — GET /analysis?contractId= -> { contractId, playbookVersion, flags[], summary } structured JSON (first-class integration surface; cached/idempotent)
+- TUNE floor (~0.35) + coverage bar (~0.7) against all 4 fixtures + a deliberately off-topic fixture (NDA/lease) before locking — do not guess
 
 ## NOT OURS (already exist — do not touch)
 - data/playbook.saas.json
